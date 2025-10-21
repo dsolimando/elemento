@@ -1,5 +1,3 @@
-I'll expand the explanation about the setup phase in the README to emphasize its role in managing the component's internal state.
-
 # Elemento
 
 A lightweight, opinionated library for building web components with a functional, React-inspired approach and based on the excellent [uhtml](
