@@ -45,6 +45,7 @@ import { computed, html, signal } from 'uhtml';
 const buttonStyles = new CSSStyleSheet();
 buttonStyles.replaceSync(buttonCss);
 
+// Define the list of reactive custom element attributes 
 const attributes = [
   'variant',
   'state',
@@ -100,6 +101,7 @@ const Button: ElementoFn<Attribute> = () => {
   };
 };
 
+// Register the custom element with Elemento
 customElements.define(
   'my-button',
   Elemento<Attribute>(Button, attributes, [buttonStyles])
