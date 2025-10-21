@@ -2,7 +2,9 @@ I'll expand the explanation about the setup phase in the README to emphasize its
 
 # Elemento
 
-A lightweight, opinionated library for building web components with a functional, React-inspired approach.
+A lightweight, opinionated library for building web components with a functional, React-inspired approach and based on the excellent [uhtml](
+  https://github.com/WebReflection/uhtml
+) library.
 
 ## Overview
 
@@ -38,39 +40,67 @@ npm install elemento uhtml
 Create your web component with a functional approach:
 
 ```typescript
-import { Elemento, ElementoFn, BoolAttr } from 'elemento';
-import { html, signal, computed } from 'uhtml';
+import buttonCss from './button.css?inline';
+import { BoolAttr, Elemento, ElementoFn } from 'elemento';
+import { computed, html, signal } from 'uhtml';
 
-// Define observed attributes
-const attributes = ['variant', 'disabled'] as const;
-type ButtonAttr = (typeof attributes)[number];
+const buttonStyles = new CSSStyleSheet();
+buttonStyles.replaceSync(buttonCss);
 
-// Create component function
-const MyButton: ElementoFn<ButtonAttr> = () => {
-  const clickCount = signal(0);
+const attributes = [
+  'variant',
+  'state',
+  'loading',
+  'shape',
+  'inverted',
+  'aria-expanded',
+  'extended',
+  'extended--mobile',
+  'extended--tablet',
+  'extended--laptop',
+] as const;
 
-  return ({ variant, disabled }) => {
-    const className = computed(() => 
-      `btn ${variant.value || 'default'} ${BoolAttr(disabled.value) ? 'disabled' : ''}`
+type Attribute = (typeof attributes)[number];
+
+const Button: ElementoFn<Attribute> = () => {
+  const counter = signal(0);
+
+  return ({ variant, shape, inverted, extended, loading, ...rest }) => {
+    const computedStyle = computed(() =>
+      [
+        variant.value || 'btn',
+        shape.value || 'default',
+        BoolAttr(inverted.value) ? 'inverted' : '',
+        BoolAttr(loading.value) ? 'loading' : '',
+      ].join(' ')
     );
 
-    return html`
-      <button 
-        class=${className.value}
-        ?disabled=${BoolAttr(disabled.value)}
-        @click=${() => { clickCount.value++; }}
-      >
-        <slot></slot>
-        <span>Clicks: ${clickCount.value}</span>
-      </button>
-    `;
+    const computedCSSProperties = computed(() =>
+      [
+        `--button-extended: ${BoolAttr(extended.value) ? '100%' : ''};`,
+        `--button-extended--tablet: ${BoolAttr(rest['extended--tablet'].value) ? '100%' : ''};`,
+        `--button-extended--mobile: ${BoolAttr(rest['extended--mobile'].value) ? '100%' : ''};`,
+        `--button-extended--laptop: ${BoolAttr(rest['extended--laptop'].value) ? '100%' : ''};`,
+      ].join('')
+    );
+
+    return html`<button
+      class="${computedStyle.value}"
+      style="${computedCSSProperties.value}"
+      aria-expanded="s${rest['aria-expanded'].value}"
+      @click=${() => {
+        counter.value++;
+      }}
+    >
+      <slot></slot>
+      <span>Counter: ${counter.value}</span>
+    </button>`;
   };
 };
 
-// Define the custom element
 customElements.define(
-  'my-button', 
-  Elemento<ButtonAttr>(MyButton, attributes)
+  'my-button',
+  Elemento<Attribute>(Button, attributes, [buttonStyles])
 );
 ```
 
