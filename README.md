@@ -1,3 +1,5 @@
+I'll expand the explanation about the setup phase in the README to emphasize its role in managing the component's internal state.
+
 # Elemento
 
 A lightweight, opinionated library for building web components with a functional, React-inspired approach.
@@ -84,10 +86,19 @@ Then use it in your HTML:
 
 Elemento follows a two-phase component creation pattern:
 
-1. **Setup Phase**: Initialize signals, create closures (equivalent to React's hooks)
-2. **Render Phase**: Return a function that produces HTML based on reactive properties
+1. **Setup Phase**:
+    - Runs only once when the component is connected to the DOM
+    - Establishes the component's internal state using signals
+    - Defines component-scoped variables and functions that persist across renders
+    - Similar to React's hooks initialization phase, allowing for closures over state
+    - The perfect place for setting up event listeners, timers, or other stateful logic
 
-This approach allows for clean separation of concerns while maintaining reactivity.
+2. **Render Phase**:
+    - Returns a function that produces HTML based on reactive properties
+    - Re-executes whenever observed attributes or internal state changes
+    - Has access to both external properties and internal state
+
+This approach allows for clean separation of concerns while maintaining reactivity. The setup phase creates an encapsulated environment for each component instance, with private state that's preserved between renders.
 
 ## How Elemento Works
 
@@ -98,6 +109,16 @@ Elemento creates a class that extends `HTMLElement`, providing:
 - Shadow DOM attachment and style encapsulation
 - Efficient re-rendering when attributes change
 - Proper lifecycle management
+
+## State Management
+
+Elemento provides a simple yet powerful approach to state management:
+
+- **External State**: Managed through observed attributes and properties
+- **Internal State**: Created during the setup phase using signals
+- **Computed Values**: Derived state calculated from other state values
+
+Unlike traditional web components that often mix state management with rendering logic, Elemento keeps these concerns separate, making components more maintainable and testable.
 
 ## Why Elemento?
 
