@@ -61,9 +61,13 @@ const attributes = [
 type Attribute = (typeof attributes)[number];
 
 const Button: ElementoFn<Attribute> = () => {
+    
+  // Create internal state using signals  
   const counter = signal(0);
 
   return ({ variant, shape, inverted, extended, loading, ...rest }) => {
+    
+    // Create computed values based on either internal state or custom element attributes  
     const computedStyle = computed(() =>
       [
         variant.value || 'btn',
