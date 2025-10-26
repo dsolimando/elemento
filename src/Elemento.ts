@@ -14,28 +14,30 @@ export function BoolAttr(attr: string) {
   return attr !== null && attr !== undefined;
 }
 
-export type ElementoHTMLFn<K extends string> = (
-  props: Record<K, Signal<string>>,
+export type ElementoHTMLFn<K extends string, P extends string> = (
+  props: Record<K & P, Signal<any>>,
   el: HTMLElement
 ) => Hole | Node | HTMLElement;
 
 /**
  * Type for template function
  */
-export type ElementoFn<K extends string> = () => ElementoHTMLFn<K>;
+export type ElementoFn<K extends string, P extends string> = () => ElementoHTMLFn<K, P>;
 
 /**
  * Web Component factory using uhtml + signal reactivity.
  *
  * @param {string[]} observedAttributes - List of attribute names to observe/react to.
  * @param {(ctx: { signals: Record<string, any>, el: HTMLElement }) => unknown} templateFn - Render function returning uhtml template.
+ * @param {properties: Record<} [properties] - Optional properties to expose.
  * @param {(ctx: { signals: Record<string, any>, el: HTMLElement }) => void} [onConnected] - Optional hook for connectedCallback.
  * @param {CSSStyleSheet[]} [cssStylesheets] - Optional CSS stylesheets to adopt.
  * @returns {CustomElementConstructor}
  */
-export function Elemento<K extends string>(
-  templateFn: ElementoFn<K>,
-  observedAttributes: readonly K[],
+export function Elemento<K extends string, P extends string>(
+  templateFn: ElementoFn<K, P>,
+  observedAttributes?: readonly K[],
+  properties?: readonly P[],
   cssStylesheets?: CSSStyleSheet[],
   onConnected?: (el: HTMLElement) => void
 ): CustomElementConstructor {
@@ -47,9 +49,11 @@ export function Elemento<K extends string>(
     /**
      * Signals for reactive properties
      */
-    signals: Record<K, Signal<string>>;
+    signals?: Record<K, Signal<string>>;
 
-    elementoHTMLFn?: ElementoHTMLFn<K>;
+    propSignals?: Record<P, Signal<any>>;
+
+    elementoHTMLFn?: ElementoHTMLFn<K, P>;
 
     /**
      * Effect for rendering
@@ -60,41 +64,56 @@ export function Elemento<K extends string>(
       super();
       this.attachShadow({ mode: 'open' });
 
-      // Create a signal for each attribute
-      this.signals = Object.fromEntries(
-        observedAttributes.map(attr => [attr, signal(this.getAttribute(attr))])
-      ) as Record<K, Signal<string>>;
-
-      // Define reactive property proxies
-      for (const attr of observedAttributes) {
-        Object.defineProperty(this, attr, {
-          get: () => this.signals[attr].value,
-          set: val => {
-            if (val !== this.signals[attr].value) {
-              this.signals[attr].value = val;
-              this.setAttribute(attr, val);
-            }
-          },
-        });
-      }
-
       this.shadowRoot!.adoptedStyleSheets = cssStylesheets || [];
     }
 
-    /**
-     * Trigger a manual update/re-render
-     */
-    update(): void {
-      if (this._effect && this.isConnected) {
-        render(this.shadowRoot!, this.elementoHTMLFn?.(this.signals, this) as Node);
-      }
-    }
-
     connectedCallback() {
+      // Create a signal for each attribute
+      this.signals = observedAttributes
+        ? (Object.fromEntries(observedAttributes.map(attr => [attr, signal(this.getAttribute(attr))])) as Record<
+            K,
+            Signal<string>
+          >)
+        : undefined;
+
+      // Define reactive attribute proxies
+      if (observedAttributes) {
+        for (const attr of observedAttributes) {
+          Object.defineProperty(this, attr, {
+            get: () => this.signals?.[attr].value,
+            set: val => {
+              if (this.signals && val !== this.signals?.[attr].value) {
+                this.signals[attr].value = val;
+                this.setAttribute(attr, val);
+              }
+            },
+          });
+        }
+      }
+
+      this.propSignals = properties
+        ? // @ts-ignore
+          (Object.fromEntries(properties.map(prop => [prop, signal(this[prop])])) as Record<P, Signal<any>>)
+        : undefined;
+
+      // Define reactive property proxies
+      if (properties)
+        for (const prop of properties) {
+          Object.defineProperty(this, prop, {
+            get: () => this.propSignals?.[prop].value,
+            set(val: any) {
+              if (val !== this.propSignals[prop].value) {
+                this.propSignals[prop].value = val;
+              }
+            },
+          });
+        }
+
       this.elementoHTMLFn = templateFn();
 
       this._effect = effect(() => {
-        render(this.shadowRoot!, this.elementoHTMLFn?.(this.signals, this) as Node);
+        // @ts-ignore
+        render(this.shadowRoot!, this.elementoHTMLFn?.({ ...this.propSignals, ...this.signals }, this) as Node);
       });
       if (typeof onConnected === 'function') {
         onConnected(this);
@@ -102,7 +121,7 @@ export function Elemento<K extends string>(
     }
 
     attributeChangedCallback(name: K, oldValue: string, newValue: string) {
-      if (oldValue !== newValue && this.signals[name]) {
+      if (this.signals && oldValue !== newValue && this.signals[name]) {
         this.signals[name].value = newValue;
       }
     }

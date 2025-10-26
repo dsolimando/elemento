@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Elemento test page</title>
+    <script type="importmap">
+        {
+            "imports": {
+            "uhtml": "https://esm.run/uhtml",
+        "Elemento": "../../dist/Elemento.js"
+            }
+        }
+    </script>
+</head>
+<body>
+<script type="module">
+    import {BoolAttr, Elemento} from 'Elemento';
+    import {computed, html, signal} from 'uhtml';
+
+
+    // Define the list of reactive custom element attributes
+    const attributes = [
+        'variant',
+        'state',
+        'loading',
+        'shape',
+        'inverted',
+        'aria-expanded',
+        'extended',
+        'extended--mobile',
+        'extended--tablet',
+        'extended--laptop',
+    ];
+
+    const properties = [
+        'data'
+    ]
+
+
+    const Button = () => {
+
+        // Create internal state using signals
+        const counter = signal(0);
+
+        return ({variant, shape, inverted, extended, loading, data, ...rest}) => {
+
+            // Create computed values based on either internal state or custom element attributes
+            const computedStyle = computed(() =>
+                [
+                    variant.value || 'btn',
+                    shape.value || 'default',
+                    BoolAttr(inverted.value) ? 'inverted' : '',
+                    BoolAttr(loading.value) ? 'loading' : '',
+                ].join(' ')
+            );
+
+            return html`
+                <button
+                        class="${computedStyle.value}"
+                        aria-expanded="${rest['aria-expanded'].value}"
+                        @click=${() => {
+                            counter.value++;
+                        }}
+                >
+                    <slot></slot>
+                    <span>Counter: ${variant} ${counter.value} ${data.value?.name}</span>
+                </button>`;
+        };
+    };
+
+    // Register the custom element with Elemento
+    customElements.define(
+        'my-button',
+        Elemento(Button, attributes, ['data'])
+    );
+
+    customElements.define(
+        'my-data-button',
+        Elemento(() => {
+            return () => {
+                return html`
+                    <my-button .data=${{ name: 'Damien' }}><slot></slot></my-button>`;
+            };
+        })
+    )
+</script>
+<my-data-button>Tap me</my-data-button>
+</body>
+</html>

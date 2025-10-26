@@ -19,7 +19,8 @@ Elemento is a tiny yet powerful library that bridges the gap between modern web 
 ## Features
 
 - 🔄 **Reactive Rendering**: Built on µhtml's signals and rendering system
-- 🎯 **Attribute Reactivity**: Automatic synchronization between attributes and properties
+- 🎯 **Attribute Reactivity**: Automatic synchronization between attributes and reactive signals
+- 🧠 **Property Reactivity**: Reactive web component properties exposed as signals via getters/setters
 - 🎨 **Encapsulated Styling**: First-class support for Shadow DOM and Constructable Stylesheets
 - 📦 **Lightweight**: Tiny footprint with no heavy dependencies
 - 🧩 **Composition-First**: Functional component patterns for easy composition
@@ -61,14 +62,17 @@ const attributes = [
 
 type Attribute = (typeof attributes)[number];
 
-const Button: ElementoFn<Attribute> = () => {
-    
-  // Create internal state using signals  
-  const counter = signal(0);
+// Define reactive component properties (settable via JS, exposed as signals)
+const properties = ['count'] as const;
 
-  return ({ variant, shape, inverted, extended, loading, ...rest }) => {
-    
-    // Create computed values based on either internal state or custom element attributes  
+type Prop = (typeof properties)[number];
+
+const Button: ElementoFn<Attribute, Prop> = () => {
+  // Create internal state using signals
+  const internalClicks = signal(0);
+
+  return ({ variant, shape, inverted, extended, loading, count, ...rest }) => {
+    // Create computed values based on either internal state, attributes, or properties
     const computedStyle = computed(() =>
       [
         variant.value || 'btn',
@@ -90,13 +94,14 @@ const Button: ElementoFn<Attribute> = () => {
     return html`<button
       class="${computedStyle.value}"
       style="${computedCSSProperties.value}"
-      aria-expanded="s${rest['aria-expanded'].value}"
+      aria-expanded="${rest['aria-expanded'].value}"
       @click=${() => {
-        counter.value++;
+        internalClicks.value++;
       }}
     >
       <slot></slot>
-      <span>Counter: ${counter.value}</span>
+      <span>Prop count: ${count?.value ?? 0}</span>
+      <span>Internal clicks: ${internalClicks.value}</span>
     </button>`;
   };
 };
@@ -104,7 +109,8 @@ const Button: ElementoFn<Attribute> = () => {
 // Register the custom element with Elemento
 customElements.define(
   'my-button',
-  Elemento<Attribute>(Button, attributes, [buttonStyles])
+  // Signature: Elemento(template, observedAttributes?, properties?, cssStylesheets?, onConnected?)
+  Elemento<Attribute, Prop>(Button, attributes, properties, [buttonStyles])
 );
 ```
 
@@ -112,7 +118,12 @@ customElements.define(
 Then use it in your HTML:
 
 ```html
-<my-button variant="primary">Click me</my-button>
+<my-button id="btn" variant="primary">Click me</my-button>
+<script>
+  // Set a reactive property via JavaScript
+  const btn = document.getElementById('btn');
+  btn.count = 5; // updates instantly because `count` is reactive
+</script>
 ```
 
 
@@ -128,8 +139,8 @@ Elemento follows a two-phase component creation pattern:
     - The perfect place for setting up event listeners, timers, or other stateful logic
 
 2. **Render Phase**:
-    - Returns a function that produces HTML based on reactive properties
-    - Re-executes whenever observed attributes or internal state changes
+    - Returns a function that produces HTML based on reactive attributes and properties
+    - Re-executes whenever observed attributes, reactive properties, or internal state change
     - Has access to both external properties and internal state
 
 This approach allows for clean separation of concerns while maintaining reactivity. The setup phase creates an encapsulated environment for each component instance, with private state that's preserved between renders.
