@@ -17,7 +17,6 @@
     import {BoolAttr, Elemento} from 'Elemento';
     import {computed, html, signal} from 'uhtml';
 
-
     // Define the list of reactive custom element attributes
     const attributes = [
         'variant',
@@ -36,9 +35,7 @@
         'data'
     ]
 
-
     const Button = () => {
-
         // Create internal state using signals
         const counter = signal(0);
 
@@ -71,7 +68,7 @@
     // Register the custom element with Elemento
     customElements.define(
         'my-button',
-        Elemento(Button, attributes, ['data'])
+        Elemento(Button, attributes, properties)
     );
 
     customElements.define(
