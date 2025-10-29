@@ -1,4 +1,6 @@
-import { effect, Hole, render, signal } from 'uhtml';
+import { effect, Hole, render, signal as usignal, computed as ucomputed, html } from 'uhtml';
+
+export { html };
 
 // Type for signal/reactive value
 export interface Signal<T> {
@@ -22,26 +24,59 @@ export type ElementoHTMLFn<K extends string, P extends string> = (
 /**
  * Type for template function
  */
-export type ElementoFn<K extends string, P extends string> = () => ElementoHTMLFn<K, P>;
+
+export function signal(value: any) {
+  if (!currentComponentInstanceRendering) {
+    throw new Error('useState must be called within a component');
+  }
+  let returnSignal = currentComponentInstanceRendering.stateSignals[currentComponentInstanceRendering.signalsIndex];
+  if (!returnSignal) {
+    returnSignal = usignal(value);
+    currentComponentInstanceRendering.stateSignals.push(returnSignal);
+  }
+  currentComponentInstanceRendering.signalsIndex++;
+  return returnSignal;
+}
+
+export function computed(fn: () => void) {
+  if (!currentComponentInstanceRendering) {
+    throw new Error('useEffect must be called within a component');
+  }
+  let returnComputed = currentComponentInstanceRendering.computed[currentComponentInstanceRendering.computedIndex];
+  if (!returnComputed) {
+    returnComputed = ucomputed(fn);
+    currentComponentInstanceRendering.computed.push(returnComputed);
+  }
+  return returnComputed;
+}
+
+let currentComponentInstanceRendering: IElemento | undefined;
+
+interface IElemento {
+  stateSignals: Signal<any>[];
+  signalsIndex: number;
+  computed: Function[];
+  computedIndex: number;
+}
 
 /**
  * Web Component factory using uhtml + signal reactivity.
  *
+ * @param elementoHTMLFn
  * @param {string[]} observedAttributes - List of attribute names to observe/react to.
- * @param {(ctx: { signals: Record<string, any>, el: HTMLElement }) => unknown} templateFn - Render function returning uhtml template.
  * @param {properties: Record<} [properties] - Optional properties to expose.
  * @param {(ctx: { signals: Record<string, any>, el: HTMLElement }) => void} [onConnected] - Optional hook for connectedCallback.
  * @param {CSSStyleSheet[]} [cssStylesheets] - Optional CSS stylesheets to adopt.
  * @returns {CustomElementConstructor}
  */
 export function Elemento<K extends string, P extends string>(
-  templateFn: ElementoFn<K, P>,
+  elementoHTMLFn: ElementoHTMLFn<K, P>,
   observedAttributes?: readonly K[],
   properties?: readonly P[],
   cssStylesheets?: CSSStyleSheet[],
   onConnected?: (el: HTMLElement) => void
 ): CustomElementConstructor {
-  return class extends HTMLElement {
+  return class extends HTMLElement implements IElemento {
     static get observedAttributes() {
       return observedAttributes;
     }
@@ -51,9 +86,15 @@ export function Elemento<K extends string, P extends string>(
      */
     signals?: Record<K, Signal<string>>;
 
+    stateSignals: Signal<any>[] = [];
+
+    computed: Function[] = [];
+
     propSignals?: Record<P, Signal<any>>;
 
-    elementoHTMLFn?: ElementoHTMLFn<K, P>;
+    signalsIndex = 0;
+
+    computedIndex = 0;
 
     /**
      * Effect for rendering
@@ -68,9 +109,11 @@ export function Elemento<K extends string, P extends string>(
     }
 
     connectedCallback() {
+      currentComponentInstanceRendering = this;
+
       // Create a signal for each attribute
       this.signals = observedAttributes
-        ? (Object.fromEntries(observedAttributes.map(attr => [attr, signal(this.getAttribute(attr))])) as Record<
+        ? (Object.fromEntries(observedAttributes.map(attr => [attr, usignal(this.getAttribute(attr))])) as Record<
             K,
             Signal<string>
           >)
@@ -93,7 +136,7 @@ export function Elemento<K extends string, P extends string>(
 
       this.propSignals = properties
         ? // @ts-ignore
-          (Object.fromEntries(properties.map(prop => [prop, signal(this[prop])])) as Record<P, Signal<any>>)
+          (Object.fromEntries(properties.map(prop => [prop, usignal(this[prop])])) as Record<P, Signal<any>>)
         : undefined;
 
       // Define reactive property proxies
@@ -109,11 +152,12 @@ export function Elemento<K extends string, P extends string>(
           });
         }
 
-      this.elementoHTMLFn = templateFn();
-
       this._effect = effect(() => {
+        currentComponentInstanceRendering = this;
+        this.signalsIndex = 0;
+        this.computedIndex = 0;
         // @ts-ignore
-        render(this.shadowRoot!, this.elementoHTMLFn?.({ ...this.propSignals, ...this.signals }, this) as Node);
+        render(this.shadowRoot!, elementoHTMLFn?.({ ...this.propSignals, ...this.signals }, this) as Node);
       });
       if (typeof onConnected === 'function') {
         onConnected(this);

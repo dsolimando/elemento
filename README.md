@@ -1,52 +1,50 @@
 # Elemento
 
-A lightweight, opinionated library for building web components with a functional, React-inspired approach and based on the excellent [uhtml](
-  https://github.com/WebReflection/uhtml
-) library.
+A lightweight, opinionated library for building web components with a functional, React-inspired approach, based on the excellent [uhtml](https://github.com/WebReflection/uhtml) library.
 
 ## Overview
 
-Elemento is a tiny yet powerful library that bridges the gap between modern web components and the functional programming paradigm popularized by React. It provides a clean, declarative API for creating custom elements that leverage Shadow DOM while maintaining a reactive programming model.
+Elemento is a tiny yet powerful library that bridges the gap between modern Web Components and functional programming. It provides a clean, declarative API for creating custom elements that leverage Shadow DOM while maintaining a reactive programming model.
 
 ## Core Philosophy
 
-- **Embrace Web Standards**: Built on native Custom Elements and Shadow DOM
-- **Functional Composition**: React-inspired component architecture without the React dependencies
-- **Declarative Rendering**: Reactive UI updates based on signal/state changes
-- **Type Safety**: Full TypeScript support for enhanced developer experience
-- **Minimalist Approach**: Small API surface with powerful capabilities
+- Embrace Web Standards: Built on native Custom Elements and Shadow DOM
+- Functional Composition: React-inspired component architecture without React
+- Declarative Rendering: Reactive UI updates based on signal/state changes
+- Type Safety: Full TypeScript support
+- Minimalist Approach: Small API surface with powerful capabilities
 
 ## Features
 
-- 🔄 **Reactive Rendering**: Built on µhtml's signals and rendering system
-- 🎯 **Attribute Reactivity**: Automatic synchronization between attributes and reactive signals
-- 🧠 **Property Reactivity**: Reactive web component properties exposed as signals via getters/setters
-- 🎨 **Encapsulated Styling**: First-class support for Shadow DOM and Constructable Stylesheets
-- 📦 **Lightweight**: Tiny footprint with no heavy dependencies
-- 🧩 **Composition-First**: Functional component patterns for easy composition
+- Reactive Rendering: Built on µhtml's signals and rendering system
+- Attribute Reactivity: Automatic synchronization between attributes and reactive signals
+- Property Reactivity: Reactive web component properties exposed as signals via getters/setters
+- Encapsulated Styling: First-class support for Shadow DOM and Constructable Stylesheets
+- Lightweight: Tiny footprint with no heavy dependencies
+- Composition-First: Functional component patterns for easy composition
 
 ## Getting Started
 
 ### Installation
 
-```shell script
-npm install elemento uhtml
-```
+Elemento depends on uhtml as a peer dependency.
 
+```sh
+npm install @solidx/elemento uhtml
+```
 
 ### Basic Usage
 
 Create your web component with a functional approach:
 
-```typescript
+```ts
 import buttonCss from './button.css?inline';
-import { BoolAttr, Elemento, ElementoFn } from 'elemento';
-import { computed, html, signal } from 'uhtml';
+import { BoolAttr, Elemento, signal, computed, html } from '@solidx/elemento';
 
 const buttonStyles = new CSSStyleSheet();
 buttonStyles.replaceSync(buttonCss);
 
-// Define the list of reactive custom element attributes 
+// Define the list of reactive custom element attributes
 const attributes = [
   'variant',
   'state',
@@ -67,43 +65,45 @@ const properties = ['count'] as const;
 
 type Prop = (typeof properties)[number];
 
-const Button: ElementoFn<Attribute, Prop> = () => {
-  // Create internal state using signals
+// Single-phase functional component: receives reactive props and the element
+const Button = ({ variant, shape, inverted, extended, loading, count, ...rest }: Record<
+  Attribute | Prop,
+  { value: any }
+>, el: HTMLElement) => {
+  // Internal state using Elemento's signals (hook-like behavior)
   const internalClicks = signal(0);
 
-  return ({ variant, shape, inverted, extended, loading, count, ...rest }) => {
-    // Create computed values based on either internal state, attributes, or properties
-    const computedStyle = computed(() =>
-      [
-        variant.value || 'btn',
-        shape.value || 'default',
-        BoolAttr(inverted.value) ? 'inverted' : '',
-        BoolAttr(loading.value) ? 'loading' : '',
-      ].join(' ')
-    );
+  // Derived values
+  const classes = computed(() =>
+    [
+      variant.value || 'btn',
+      shape.value || 'default',
+      BoolAttr(inverted.value) ? 'inverted' : '',
+      BoolAttr(loading.value) ? 'loading' : '',
+    ].join(' ')
+  );
 
-    const computedCSSProperties = computed(() =>
-      [
-        `--button-extended: ${BoolAttr(extended.value) ? '100%' : ''};`,
-        `--button-extended--tablet: ${BoolAttr(rest['extended--tablet'].value) ? '100%' : ''};`,
-        `--button-extended--mobile: ${BoolAttr(rest['extended--mobile'].value) ? '100%' : ''};`,
-        `--button-extended--laptop: ${BoolAttr(rest['extended--laptop'].value) ? '100%' : ''};`,
-      ].join('')
-    );
+  const cssVars = computed(() =>
+    [
+      `--button-extended: ${BoolAttr(extended.value) ? '100%' : ''};`,
+      `--button-extended--tablet: ${BoolAttr(rest['extended--tablet'].value) ? '100%' : ''};`,
+      `--button-extended--mobile: ${BoolAttr(rest['extended--mobile'].value) ? '100%' : ''};`,
+      `--button-extended--laptop: ${BoolAttr(rest['extended--laptop'].value) ? '100%' : ''};`,
+    ].join('')
+  );
 
-    return html`<button
-      class="${computedStyle.value}"
-      style="${computedCSSProperties.value}"
-      aria-expanded="${rest['aria-expanded'].value}"
-      @click=${() => {
-        internalClicks.value++;
-      }}
-    >
-      <slot></slot>
-      <span>Prop count: ${count?.value ?? 0}</span>
-      <span>Internal clicks: ${internalClicks.value}</span>
-    </button>`;
-  };
+  return html`<button
+    class="${classes.value}"
+    style="${cssVars.value}"
+    aria-expanded="${rest['aria-expanded'].value}"
+    @click=${() => {
+      internalClicks.value++;
+    }}
+  >
+    <slot></slot>
+    <span>Prop count: ${count?.value ?? 0}</span>
+    <span>Internal clicks: ${internalClicks.value}</span>
+  </button>`;
 };
 
 // Register the custom element with Elemento
@@ -114,64 +114,72 @@ customElements.define(
 );
 ```
 
-
 Then use it in your HTML:
 
 ```html
 <my-button id="btn" variant="primary">Click me</my-button>
-<script>
+<script type="module">
   // Set a reactive property via JavaScript
   const btn = document.getElementById('btn');
   btn.count = 5; // updates instantly because `count` is reactive
 </script>
 ```
 
+## API
 
-## API Design
+### Elemento
 
-Elemento follows a two-phase component creation pattern:
+Creates a Web Component class around your functional component.
 
-1. **Setup Phase**:
-    - Runs only once when the component is connected to the DOM
-    - Establishes the component's internal state using signals
-    - Defines component-scoped variables and functions that persist across renders
-    - Similar to React's hooks initialization phase, allowing for closures over state
-    - The perfect place for setting up event listeners, timers, or other stateful logic
+Signature:
 
-2. **Render Phase**:
-    - Returns a function that produces HTML based on reactive attributes and properties
-    - Re-executes whenever observed attributes, reactive properties, or internal state change
-    - Has access to both external properties and internal state
+```
+Elemento(
+  template: (props: Record<K | P, Signal<any>>, el: HTMLElement) => Node | HTMLElement,
+  observedAttributes?: readonly K[],
+  properties?: readonly P[],
+  cssStylesheets?: CSSStyleSheet[],
+  onConnected?: (el: HTMLElement) => void
+): CustomElementConstructor
+```
 
-This approach allows for clean separation of concerns while maintaining reactivity. The setup phase creates an encapsulated environment for each component instance, with private state that's preserved between renders.
+- observedAttributes: attributes mirrored to signals and kept in sync with the DOM
+- properties: JS properties mirrored to signals (no attributes involved)
+- cssStylesheets: constructable stylesheets adopted into the shadow root
+- onConnected: optional callback invoked after the element connects
 
-## How Elemento Works
+### Component function
 
-Elemento creates a class that extends `HTMLElement`, providing:
+Your component function is called on every reactive change with a single object containing signals for both attributes and properties, and the custom element instance as second parameter. Read signal values via `.value`.
 
-- Automatic observation of specified attributes
-- Signal-based reactivity for each attribute
-- Shadow DOM attachment and style encapsulation
-- Efficient re-rendering when attributes change
-- Proper lifecycle management
+You may call Elemento's hook-like utilities inside the function:
 
-## State Management
+- signal(initial): create internal state that persists across renders
+- computed(fn): derived read-only signal
+- html: re-export from uhtml for templating
 
-Elemento provides a simple yet powerful approach to state management:
+Important notes:
 
-- **External State**: Managed through observed attributes and properties
-- **Internal State**: Created during the setup phase using signals
-- **Computed Values**: Derived state calculated from other state values
+- Call signal/computed at the top level of your component and in the same order across renders (hook-like rule).
+- Boolean attributes are strings at the DOM level; use `BoolAttr(value)` to coerce presence/absence to boolean.
 
-Unlike traditional web components that often mix state management with rendering logic, Elemento keeps these concerns separate, making components more maintainable and testable.
+## How it works
+
+Elemento creates a class that extends `HTMLElement` and:
+
+- Observes specified attributes and maps them to signals
+- Creates reactive property signals with getters/setters
+- Attaches a shadow root and adopts provided stylesheets
+- Re-renders efficiently via uhtml effects when any relevant signal changes
+- Cleans up on disconnect
 
 ## Why Elemento?
 
-- **No Virtual DOM**: Direct DOM manipulation for better performance
-- **Standards-Based**: Works with native browser technologies
-- **Minimal Abstraction**: Thin wrapper around web components
-- **Functional Approach**: Provides the elegance of React's functional components
-- **TypeScript First**: Designed with type safety in mind
+- No Virtual DOM: Direct DOM operations via uhtml
+- Standards-Based: Works with native browser technologies
+- Minimal Abstraction: Thin wrapper around web components
+- Functional Approach: Brings a React-like feel without React
+- TypeScript First: Designed with type safety in mind
 
 ## License
 

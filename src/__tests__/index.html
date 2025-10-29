@@ -14,8 +14,7 @@
 </head>
 <body>
 <script type="module">
-    import {BoolAttr, Elemento} from 'Elemento';
-    import {computed, html, signal} from 'uhtml';
+    import {BoolAttr, Elemento, signal, computed, html} from 'Elemento';
 
     // Define the list of reactive custom element attributes
     const attributes = [
@@ -35,34 +34,40 @@
         'data'
     ]
 
-    const Button = () => {
+    let j = 0;
+
+    const Button = ({variant, shape, inverted, extended, loading, data, ...rest}) => {
         // Create internal state using signals
-        const counter = signal(0);
+        const state = signal(0)
+        const state2 = signal(0)
+        const state3 = computed(() => state.value + state2.value)
 
-        return ({variant, shape, inverted, extended, loading, data, ...rest}) => {
+        // Create computed values based on either internal state or custom element attributes
+        const computedStyle = computed(() =>
+            [
+                variant.value || 'btn',
+                shape.value || 'default',
+                BoolAttr(inverted.value) ? 'inverted' : '',
+                BoolAttr(loading.value) ? 'loading' : '',
+            ].join(' ')
+        );
 
-            // Create computed values based on either internal state or custom element attributes
-            const computedStyle = computed(() =>
-                [
-                    variant.value || 'btn',
-                    shape.value || 'default',
-                    BoolAttr(inverted.value) ? 'inverted' : '',
-                    BoolAttr(loading.value) ? 'loading' : '',
-                ].join(' ')
-            );
-
-            return html`
-                <button
-                        class="${computedStyle.value}"
-                        aria-expanded="${rest['aria-expanded'].value}"
-                        @click=${() => {
-                            counter.value++;
-                        }}
-                >
-                    <slot></slot>
-                    <span>Counter: ${variant} ${counter.value} ${data.value?.name}</span>
-                </button>`;
-        };
+        return html`
+            <button
+                    class="${computedStyle.value}"
+                    aria-expanded="${rest['aria-expanded'].value}"
+                    @click=${() => {
+                        //counter.value++;
+                        if (j++ % 2 === 0) {
+                            state2.value++;
+                            return;
+                        }
+                        state.value++;
+                    }}
+            >
+                <slot></slot>
+                <span>Counter: ${variant} ${state.value} ${state2.value} ${state3.value} ${data.value?.name}</span>
+            </button>`;
     };
 
     // Register the custom element with Elemento
@@ -74,10 +79,10 @@
     customElements.define(
         'my-data-button',
         Elemento(() => {
-            return () => {
-                return html`
-                    <my-button .data=${{ name: 'Damien' }}><slot></slot></my-button>`;
-            };
+            return html`
+                <my-button .data=${{name: 'Damien'}}>
+                    <slot></slot>
+                </my-button>`;
         })
     )
 </script>
