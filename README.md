@@ -39,7 +39,7 @@ Create your web component with a functional approach:
 
 ```ts
 import buttonCss from './button.css?inline';
-import { BoolAttr, Elemento, signal, computed, html } from '@solidx/elemento';
+import { BoolAttr, Elemento, signal, computed, html, mount, unmount } from '@solidx/elemento';
 
 const buttonStyles = new CSSStyleSheet();
 buttonStyles.replaceSync(buttonCss);
@@ -91,6 +91,16 @@ const Button = ({ variant, shape, inverted, extended, loading, count, ...rest }:
       `--button-extended--laptop: ${BoolAttr(rest['extended--laptop'].value) ? '100%' : ''};`,
     ].join('')
   );
+
+  // Lifecycle: run once after the first render
+  mount(() => {
+    console.log('Button mounted');
+  });
+
+  // Cleanup when the element is disconnected
+  unmount(() => {
+    console.log('Button unmounted');
+  });
 
   return html`<button
     class="${classes.value}"
@@ -156,6 +166,8 @@ You may call Elemento's hook-like utilities inside the function:
 
 - signal(initial): create internal state that persists across renders
 - computed(fn): derived read-only signal
+- mount(fn): runs once, right after the component's first successful render
+- unmount(fn): runs when the custom element disconnects; use for cleanup
 - html: re-export from uhtml for templating
 
 Important notes:

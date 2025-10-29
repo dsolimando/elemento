@@ -14,7 +14,7 @@
 </head>
 <body>
 <script type="module">
-    import {BoolAttr, Elemento, signal, computed, html} from 'Elemento';
+    import {BoolAttr, Elemento, signal, computed, html, mount, unmount} from 'Elemento';
 
     // Define the list of reactive custom element attributes
     const attributes = [
@@ -51,6 +51,10 @@
                 BoolAttr(loading.value) ? 'loading' : '',
             ].join(' ')
         );
+
+        // Define effects to run when the component is mounted or unmounted
+        mount(() => console.log('Mounted!'));
+        unmount(() => console.log('Unmounted!'));
 
         return html`
             <button

@@ -50,6 +50,24 @@ export function computed(fn: () => void) {
   return returnComputed;
 }
 
+export function mount(fn: () => void) {
+  if (!currentComponentInstanceRendering) {
+    throw new Error('useEffect must be called within a component');
+  }
+  if (!currentComponentInstanceRendering.mount) {
+    currentComponentInstanceRendering.mount = fn;
+  }
+}
+
+export function unmount(fn: () => void) {
+  if (!currentComponentInstanceRendering) {
+    throw new Error('useEffect must be called within a component');
+  }
+  if (!currentComponentInstanceRendering.unmount) {
+    currentComponentInstanceRendering.unmount = fn;
+  }
+}
+
 let currentComponentInstanceRendering: IElemento | undefined;
 
 interface IElemento {
@@ -57,6 +75,8 @@ interface IElemento {
   signalsIndex: number;
   computed: Function[];
   computedIndex: number;
+  mount?: Function;
+  unmount?: Function;
 }
 
 /**
@@ -89,6 +109,10 @@ export function Elemento<K extends string, P extends string>(
     stateSignals: Signal<any>[] = [];
 
     computed: Function[] = [];
+
+    mount?: Function;
+
+    unmount?: Function;
 
     propSignals?: Record<P, Signal<any>>;
 
@@ -156,8 +180,12 @@ export function Elemento<K extends string, P extends string>(
         currentComponentInstanceRendering = this;
         this.signalsIndex = 0;
         this.computedIndex = 0;
+        const mounted = !!this.mount;
         // @ts-ignore
         render(this.shadowRoot!, elementoHTMLFn?.({ ...this.propSignals, ...this.signals }, this) as Node);
+        if (!mounted) {
+          this.mount?.();
+        }
       });
       if (typeof onConnected === 'function') {
         onConnected(this);
@@ -175,6 +203,7 @@ export function Elemento<K extends string, P extends string>(
       if (this._effect && typeof this._effect.cleanup === 'function') {
         this._effect.cleanup();
       }
+      this.unmount?.();
     }
   };
 }
