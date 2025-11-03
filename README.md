@@ -193,6 +193,10 @@ Elemento creates a class that extends `HTMLElement` and:
 - Functional Approach: Brings a React-like feel without React
 - TypeScript First: Designed with type safety in mind
 
+## Guides
+
+- [Central Store with Elemento](./store.md)
+
 ## License
 
 MIT

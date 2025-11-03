@@ -27,7 +27,7 @@ export type ElementoHTMLFn<K extends string, P extends string> = (
 
 export function signal(value: any) {
   if (!currentComponentInstanceRendering) {
-    throw new Error('useState must be called within a component');
+    return usignal(value); // we return a signal if we are not in a component. up to the user to handle his lifecycle.
   }
   let returnSignal = currentComponentInstanceRendering.stateSignals[currentComponentInstanceRendering.signalsIndex];
   if (!returnSignal) {
@@ -178,8 +178,8 @@ export function Elemento<K extends string, P extends string>(
 
       this._effect = effect(() => {
         currentComponentInstanceRendering = this;
-        this.signalsIndex = 0;
-        this.computedIndex = 0;
+        this.signalsIndex = 0; // reset signalsIndex
+        this.computedIndex = 0; // reset computedIndex
         const mounted = !!this.mount;
         // @ts-ignore
         render(this.shadowRoot!, elementoHTMLFn?.({ ...this.propSignals, ...this.signals }, this) as Node);
