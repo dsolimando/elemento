@@ -13,7 +13,16 @@
     "custom elements",
     "shadow dom",
     "react",
-    "functional"
+    "functional",
+    "UI library",
+    "lit-html",
+    "signals",
+    "preact-signals",
+    "declarative",
+    "component",
+    "frontend",
+    "lightweight",
+    "typescript"
   ],
   "author": "Damien Solimando - SolidX",
   "license": "MIT",
