@@ -132,7 +132,7 @@ Use an import map to point `Elemento` to the built file under `dist/` (this repo
 
 Install the package:
 ```sh
-npm install @solidx/elemento lit-html @preact/signals-core
+npm install @solidx/elemento
 ```
 Then import from the package name in your app code:
 ```js
