@@ -37,6 +37,36 @@ npm install @solidx/elemento lit-html @preact/signals-core
 
 ### Basic Usage
 
+A minimal component that renders a greeting and reacts to a `name` attribute.
+
+```js
+import { Elemento, html } from '@solidx/elemento';
+
+// Observe one attribute (as a reactive signal)
+const observed = ['name'];
+
+// Functional component: read signal with .value
+function Hello({ name }) {
+  return html`<p>Hello ${name.value || 'World'}!</p>`;
+}
+
+// Register it
+customElements.define('hello-name', Elemento(Hello, observed));
+```
+
+Use it in HTML:
+
+```html
+<hello-name name="Alice"></hello-name>
+<!-- Changing the attribute updates the content reactively -->
+<script type="module">
+  const el = document.querySelector('hello-name');
+  el.setAttribute('name', 'Bob');
+</script>
+```
+
+### Complex Example
+
 Create your web component with a functional approach:
 
 ```ts
