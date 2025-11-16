@@ -18,7 +18,6 @@ export default {
       sourcemap: true,
     },
   ],
-  external: ['uhtml'], // List external dependencies
   plugins: [
     nodeResolve(),
     typescript({

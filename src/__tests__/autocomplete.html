@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Elemento autocomplete example page</title>
+    <script type="importmap">
+        {
+            "imports": {
+        "Elemento": "../../dist/index.js"
+            }
+        }
+    </script>
+</head>
+<body>
+<script type="module">
+    import {Elemento, signal, computed, html} from 'Elemento';
+    import {getCountries} from "./countryListService.js";
+
+    const styleSheet = new CSSStyleSheet();
+    styleSheet.replaceSync(`
+        input {
+            anchor-name: --input;
+        }
+        my-country-list {
+            position: absolute;
+            position-anchor: --input;
+            position-area: bottom;
+            padding: 1rem;
+            border: 1px solid black;
+        }
+    `)
+
+    function CountryList({filter}) {
+        const filteredCountries = computed(() =>
+            getCountries().value.filter(country => country.name.toLowerCase().includes(filter.value.toLowerCase())));
+
+        return html`
+            <div>
+                <ul>
+                    ${filteredCountries?.value?.map?.(country => html`
+                        <li>${country.name}</li>`)}
+                </ul>
+            </div>`
+    }
+
+    function AutoComplete() {
+        const filter = signal('');
+
+        return html`
+            <input name="toto" type="text" .value=${filter.value} @input="${e => {
+                filter.value = e.target.value
+            }}">
+            <my-country-list .filter=${filter.value}></my-country-list>
+        `;
+    }
+
+    customElements.define('my-country-list', Elemento(CountryList, [], ['filter']));
+    customElements.define('my-autocomplete', Elemento(AutoComplete, [], [], [styleSheet]));
+</script>
+<my-autocomplete></my-autocomplete>
+</body>
+</html>

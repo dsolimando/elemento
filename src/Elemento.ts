@@ -1,16 +1,7 @@
-import { effect, Hole, render, signal as usignal, computed as ucomputed, html } from 'uhtml';
+import { computed as ucomputed, effect, ReadonlySignal, signal as usignal, Signal } from '@preact/signals-core';
+import { html, render } from 'lit-html';
 
 export { html };
-
-// Type for signal/reactive value
-export interface Signal<T> {
-  value: T;
-}
-
-// Type for effect cleanup
-export interface Effect {
-  cleanup?: () => void;
-}
 
 export function BoolAttr(attr: string) {
   return attr !== null && attr !== undefined;
@@ -19,11 +10,7 @@ export function BoolAttr(attr: string) {
 export type ElementoHTMLFn<K extends string, P extends string> = (
   props: Record<K & P, Signal<any>>,
   el: HTMLElement
-) => Hole | Node | HTMLElement;
-
-/**
- * Type for template function
- */
+) => Node | HTMLElement;
 
 export function signal(value: any) {
   if (!currentComponentInstanceRendering) {
@@ -42,7 +29,8 @@ export function computed(fn: () => void) {
   if (!currentComponentInstanceRendering) {
     throw new Error('useEffect must be called within a component');
   }
-  let returnComputed = currentComponentInstanceRendering.computed[currentComponentInstanceRendering.computedIndex];
+  let returnComputed: ReadonlySignal =
+    currentComponentInstanceRendering.computed[currentComponentInstanceRendering.computedIndex];
   if (!returnComputed) {
     returnComputed = ucomputed(fn);
     currentComponentInstanceRendering.computed.push(returnComputed);
@@ -71,16 +59,16 @@ export function unmount(fn: () => void) {
 let currentComponentInstanceRendering: IElemento | undefined;
 
 interface IElemento {
-  stateSignals: Signal<any>[];
+  stateSignals: Signal[];
   signalsIndex: number;
-  computed: Function[];
+  computed: ReadonlySignal[];
   computedIndex: number;
   mount?: Function;
   unmount?: Function;
 }
 
 /**
- * Web Component factory using uhtml + signal reactivity.
+ * Web Component factory using lit-html + Preact Signals Core (@preact/signals-core) reactivity.
  *
  * @param elementoHTMLFn
  * @param {string[]} observedAttributes - List of attribute names to observe/react to.
@@ -108,7 +96,7 @@ export function Elemento<K extends string, P extends string>(
 
     stateSignals: Signal<any>[] = [];
 
-    computed: Function[] = [];
+    computed: ReadonlySignal[] = [];
 
     mount?: Function;
 
@@ -123,12 +111,11 @@ export function Elemento<K extends string, P extends string>(
     /**
      * Effect for rendering
      */
-    _effect?: Effect;
+    _effect?: () => void;
 
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
-
       this.shadowRoot!.adoptedStyleSheets = cssStylesheets || [];
     }
 
@@ -136,6 +123,7 @@ export function Elemento<K extends string, P extends string>(
       currentComponentInstanceRendering = this;
 
       // Create a signal for each attribute
+
       this.signals = observedAttributes
         ? (Object.fromEntries(observedAttributes.map(attr => [attr, usignal(this.getAttribute(attr))])) as Record<
             K,
@@ -182,10 +170,11 @@ export function Elemento<K extends string, P extends string>(
         this.computedIndex = 0; // reset computedIndex
         const mounted = !!this.mount;
         // @ts-ignore
-        render(this.shadowRoot!, elementoHTMLFn?.({ ...this.propSignals, ...this.signals }, this) as Node);
+        render(elementoHTMLFn?.({ ...this.propSignals, ...this.signals }, this) as Node, this.shadowRoot!);
         if (!mounted) {
           this.mount?.();
         }
+        currentComponentInstanceRendering = undefined;
       });
       if (typeof onConnected === 'function') {
         onConnected(this);
@@ -199,10 +188,7 @@ export function Elemento<K extends string, P extends string>(
     }
 
     disconnectedCallback() {
-      // clean up effect if needed (optional API safety)
-      if (this._effect && typeof this._effect.cleanup === 'function') {
-        this._effect.cleanup();
-      }
+      this._effect?.();
       this.unmount?.();
     }
   };

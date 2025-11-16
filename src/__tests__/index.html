@@ -6,7 +6,6 @@
     <script type="importmap">
         {
             "imports": {
-            "uhtml": "https://esm.run/uhtml",
         "Elemento": "../../dist/index.js"
             }
         }
@@ -70,7 +69,7 @@
                     }}
             >
                 <slot></slot>
-                <span>Counter: ${variant} ${state.value} ${state2.value} ${state3.value} ${data.value?.name}</span>
+                <span>Counter: ${variant.value} ${state.value} ${state2.value} ${state3.value} ${data.value?.name}</span>
             </button>`;
     };
 

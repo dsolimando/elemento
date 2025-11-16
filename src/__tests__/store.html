@@ -1,101 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Elemento test page</title>
+    <meta charset="utf-8" />
     <script type="importmap">
         {
-            "imports": {
-            "uhtml": "https://esm.run/uhtml",
-        "Elemento": "../../dist/index.js"
-            }
+          "imports": {
+            "Elemento": "../../dist/index.js"
+          }
         }
     </script>
 </head>
 <body>
 <script type="module">
-    import {BoolAttr, Elemento, signal, computed, html, mount, unmount} from 'Elemento';
-    import {store,fetchTodos} from "./store.js";
+    import { Elemento, computed, html } from 'Elemento';
+    import { store, fetchTodos, addTodo } from './store.js';
 
-    fetchTodos();
-
-    // Define the list of reactive custom element attributes
-    const attributes = [
-        'variant',
-        'state',
-        'loading',
-        'shape',
-        'inverted',
-        'aria-expanded',
-        'extended',
-        'extended--mobile',
-        'extended--tablet',
-        'extended--laptop',
-    ];
-
-    const properties = [
-        'data'
-    ]
-
-    let j = 0;
-
-    const Button = ({variant, shape, inverted, extended, loading, data, ...rest}) => {
-        // Create internal state using signals
-        const state = signal(0)
-        const state2 = signal(0)
-        const state3 = computed(() => state.value + state2.value)
-
-        // Create computed values based on either internal state or custom element attributes
-        const computedStyle = computed(() =>
-            [
-                variant.value || 'btn',
-                shape.value || 'default',
-                BoolAttr(inverted.value) ? 'inverted' : '',
-                BoolAttr(loading.value) ? 'loading' : '',
-            ].join(' ')
-        );
-
-        // Define effects to run when the component is mounted or unmounted
-        mount(() => console.log('Mounted!'));
-        unmount(() => console.log('Unmounted!'));
+    function TodoList() {
+        // derive reactive value from the store
+        const todos = computed(() => store.todos.value);
 
         return html`
-            <button
-                    class="${computedStyle.value}"
-                    aria-expanded="${rest['aria-expanded'].value}"
-                    @click=${() => {
-                        //counter.value++;
-                        if (j++ % 2 === 0) {
-                            state2.value++;
-                            return;
-                        }
-                        state.value++;
-                    }}
-            >
-                <slot></slot>
-                <span>Counter: ${variant} ${state.value} ${state2.value} ${state3.value} ${data.value?.name}</span>
-            </button>`;
-    };
-
-    // Register the custom element with Elemento
-    customElements.define(
-        'my-button',
-        Elemento(Button, attributes, properties)
-    );
-
-    customElements.define(
-        'my-data-button',
-        Elemento(() => {
-            const todos = computed(() => store.todos.value);
-            console.log(todos.value);
-            return html`
+              <section>
+                <h3>Todos</h3>
                 ${todos.value?.map(t => html`<p>${t.title}</p>`)}
-                <my-button .data=${{name: 'Damien'}}>
-                    <slot></slot>
-                </my-button>`;
-        })
-    )
+              </section>`;
+    }
+    customElements.define('todo-list', Elemento(TodoList));
+
+    function TodoApp() {
+        return html`
+            <todo-list></todo-list>
+            <button @click=${() => addTodo({ title: 'New todo' })}>add todo</button>
+          `;
+    }
+    customElements.define('my-data-button', Elemento(TodoApp));
+
+    fetchTodos();
 </script>
-<my-data-button>Tap me</my-data-button>
+<my-data-button></my-data-button>
 </body>
 </html>

@@ -1,10 +1,12 @@
 # Elemento
 
-A lightweight, opinionated library for building web components with a functional, React-inspired approach, based on the excellent [uhtml](https://github.com/WebReflection/uhtml) library.
+A lightweight, opinionated library for building web components with a functional, React-inspired approach, powered by the excellent [lit-html](https://github.com/lit/lit/tree/main/packages/lit-html) templating library and the tiny, fast [Preact Signals Core](https://github.com/preactjs/signals) reactivity system.
 
 ## Overview
 
 Elemento is a tiny yet powerful library that bridges the gap between modern Web Components and functional programming. It provides a clean, declarative API for creating custom elements that leverage Shadow DOM while maintaining a reactive programming model.
+
+Note on reactivity: Elemento uses Preact Signals Core (@preact/signals-core) for its reactive system. In our experience this has been the most stable and well-supported signals implementation for Elemento. Previous references to other signal libraries have been removed from the docs.
 
 ## Core Philosophy
 
@@ -16,7 +18,7 @@ Elemento is a tiny yet powerful library that bridges the gap between modern Web 
 
 ## Features
 
-- Reactive Rendering: Built on µhtml's signals and rendering system
+- Reactive Rendering: lit-html templating + reactivity powered by [Preact Signals Core](https://github.com/preactjs/signals)
 - Attribute Reactivity: Automatic synchronization between attributes and reactive signals
 - Property Reactivity: Reactive web component properties exposed as signals via getters/setters
 - Encapsulated Styling: First-class support for Shadow DOM and Constructable Stylesheets
@@ -27,10 +29,10 @@ Elemento is a tiny yet powerful library that bridges the gap between modern Web 
 
 ### Installation
 
-Elemento depends on uhtml as a peer dependency.
+Elemento uses [Preact Signals Core](https://github.com/preactjs/signals) for reactivity and depends on `lit-html` and `@preact/signals-core` as peer dependencies.
 
 ```sh
-npm install @solidx/elemento uhtml
+npm install @solidx/elemento lit-html @preact/signals-core
 ```
 
 ### Basic Usage
@@ -168,7 +170,8 @@ You may call Elemento's hook-like utilities inside the function:
 - computed(fn): derived read-only signal
 - mount(fn): runs once, right after the component's first successful render
 - unmount(fn): runs when the custom element disconnects; use for cleanup
-- html: re-export from uhtml for templating
+- html: re-export from lit-html for templating
+- signals: `signal`/`computed` are powered by [Preact Signals Core](https://github.com/preactjs/signals)
 
 Important notes:
 
@@ -181,13 +184,14 @@ Elemento creates a class that extends `HTMLElement` and:
 
 - Observes specified attributes and maps them to signals
 - Creates reactive property signals with getters/setters
+- Reactivity powered by [Preact Signals Core](https://github.com/preactjs/signals)
 - Attaches a shadow root and adopts provided stylesheets
-- Re-renders efficiently via uhtml effects when any relevant signal changes
+- Re-renders efficiently via lit-html when any relevant signal changes
 - Cleans up on disconnect
 
 ## Why Elemento?
 
-- No Virtual DOM: Direct DOM operations via uhtml
+- No Virtual DOM: Direct DOM operations via lit-html
 - Standards-Based: Works with native browser technologies
 - Minimal Abstraction: Thin wrapper around web components
 - Functional Approach: Brings a React-like feel without React

@@ -12,7 +12,7 @@ You’ll learn how to:
 - Keep async data fetching in one place
 - Provide a single source of truth with a small, predictable API
 
-Elemento uses signals under the hood, so any component reading from the store will re-render automatically when the store changes.
+Elemento uses signals powered by [Preact Signals Core](https://github.com/preactjs/signals) under the hood, so any component reading from the store will re-render automatically when the store changes.
 
 ---
 
@@ -77,9 +77,7 @@ export function addTodo(todo) {
 import { Elemento, computed, html } from '@solidx/elemento';
 import { store } from './store.js';
 
-customElements.define(
-  'todo-list',
-  Elemento(() => {
+function TodoList() {
     // derive reactive value from the store
     const todos = computed(() => store.todos.value);
 
@@ -88,22 +86,23 @@ customElements.define(
         <h3>Todos</h3>
         ${todos.value?.map(t => html`<p>${t.title}</p>`)}
       </section>`;
-  })
-);
+}
+customElements.define('todo-list', Elemento(TodoList));
 ```
 
 You can keep composing components like usual:
 
 ```js
-customElements.define(
-  'todo-app',
-  Elemento(() => html`
+
+function TodoApp() {
+    return html`
     <todo-list></todo-list>
     <button @click=${() => import('./store.js').then(m => m.addTodo({ title: 'New todo' }))}>
       Add todo
     </button>
-  `)
-);
+  `
+}
+customElements.define('todo-app', Elemento(TodoApp));
 ```
 
 ---
@@ -116,7 +115,6 @@ Use an import map to point `Elemento` to the built file under `dist/` (this repo
 <script type="importmap">
   {
     "imports": {
-      "uhtml": "https://esm.run/uhtml",
       "Elemento": "/dist/index.js"
     }
   }
@@ -134,7 +132,7 @@ Use an import map to point `Elemento` to the built file under `dist/` (this repo
 
 Install the package:
 ```sh
-npm install @solidx/elemento uhtml
+npm install @solidx/elemento lit-html @preact/signals-core
 ```
 Then import from the package name in your app code:
 ```js
@@ -195,38 +193,45 @@ export async function fetchTodos() {
 ```html
 <!doctype html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8" />
     <script type="importmap">
-      {
-        "imports": {
-          "uhtml": "https://esm.run/uhtml",
-          "Elemento": "./dist/index.js"
+        {
+          "imports": {
+            "Elemento": "../../dist/index.js"
+          }
         }
-      }
     </script>
-  </head>
-  <body>
-    <script type="module">
-      import { Elemento, computed, html } from 'Elemento';
-      import { store, fetchTodos } from './store.js';
+</head>
+<body>
+<script type="module">
+    import { Elemento, computed, html } from 'Elemento';
+    import { store, fetchTodos, addTodo } from './store.js';
 
-      fetchTodos();
+    function TodoList() {
+        // derive reactive value from the store
+        const todos = computed(() => store.todos.value);
 
-      customElements.define(
-        'my-data-button',
-        Elemento(() => {
-          const todos = computed(() => store.todos.value);
-          return html`
-            ${todos.value?.map(t => html`<p>${t.title}</p>`)}
-            <button @click=${() => console.log('clicked')}>Tap me</button>
+        return html`
+              <section>
+                <h3>Todos</h3>
+                ${todos.value?.map(t => html`<p>${t.title}</p>`)}
+              </section>`;
+    }
+    customElements.define('todo-list', Elemento(TodoList));
+
+    function TodoApp() {
+        return html`
+            <todo-list></todo-list>
+            <button @click=${() => addTodo({ title: 'New todo' })}>add todo</button>
           `;
-        })
-      );
-    </script>
+    }
+    customElements.define('my-data-button', Elemento(TodoApp));
 
-    <my-data-button></my-data-button>
-  </body>
+    fetchTodos();
+</script>
+<my-data-button></my-data-button>
+</body>
 </html>
 ```
 
