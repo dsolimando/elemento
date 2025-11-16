@@ -6,7 +6,7 @@ A lightweight, opinionated library for building web components with a functional
 
 Elemento is a tiny yet powerful library that bridges the gap between modern Web Components and functional programming. It provides a clean, declarative API for creating custom elements that leverage Shadow DOM while maintaining a reactive programming model.
 
-Note on reactivity: Elemento uses Preact Signals Core (@preact/signals-core) for its reactive system. In our experience this has been the most stable and well-supported signals implementation for Elemento. Previous references to other signal libraries have been removed from the docs.
+Note on reactivity: Elemento uses Preact Signals Core (@preact/signals-core) for its reactive system. In our experience this has been the most stable and well-supported signals implementation for Elemento.
 
 ## Core Philosophy
 
