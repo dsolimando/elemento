@@ -29,10 +29,8 @@ Note on reactivity: Elemento uses Preact Signals Core (@preact/signals-core) for
 
 ### Installation
 
-Elemento uses [Preact Signals Core](https://github.com/preactjs/signals) for reactivity and depends on `lit-html` and `@preact/signals-core` as peer dependencies.
-
 ```sh
-npm install @solidx/elemento lit-html @preact/signals-core
+npm install @solidx/elemento
 ```
 
 ### Basic Usage
