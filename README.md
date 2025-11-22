@@ -6,6 +6,8 @@ A lightweight, opinionated library for building web components with a functional
 
 Elemento is a tiny yet powerful library that bridges the gap between modern Web Components and functional programming. It provides a clean, declarative API for creating custom elements that leverage Shadow DOM while maintaining a reactive programming model.
 
+Build-free usage: Elemento ships as modern ESM and works directly in browsers that support ES modules—no bundling or transpilation is required unless your app needs it.
+
 Note on reactivity: Elemento uses Preact Signals Core (@preact/signals-core) for its reactive system. In our experience this has been the most stable and well-supported signals implementation for Elemento.
 
 ## Core Philosophy
@@ -49,7 +51,7 @@ function Hello({ name }) {
 }
 
 // Register it
-customElements.define('hello-name', Elemento(Hello, observed));
+customElements.define('hello-name', Elemento(Hello, { observedAttributes: observed }));
 ```
 
 Use it in HTML:
@@ -149,8 +151,13 @@ const Button = ({ variant, shape, inverted, extended, loading, count, ...rest }:
 // Register the custom element with Elemento
 customElements.define(
   'my-button',
-  // Signature: Elemento(template, observedAttributes?, properties?, cssStylesheets?, onConnected?)
-  Elemento<Attribute, Prop>(Button, attributes, properties, [buttonStyles])
+  // Signature: Elemento(template, options?)
+  Elemento<Attribute, Prop>(Button, {
+    observedAttributes: attributes,
+    properties,
+    cssStylesheets: [buttonStyles],
+    formAssociated: true, // opt-in if you need form participation
+  })
 );
 ```
 
@@ -176,17 +183,35 @@ Signature:
 ```
 Elemento(
   template: (props: Record<K | P, Signal<any>>, el: HTMLElement) => Node | HTMLElement,
-  observedAttributes?: readonly K[],
-  properties?: readonly P[],
-  cssStylesheets?: CSSStyleSheet[],
-  onConnected?: (el: HTMLElement) => void
+  options?: ElementoOptions<K, P>
 ): CustomElementConstructor
 ```
+
+The `options` object matches the `ElementoOptions<K, P>` type and includes:
 
 - observedAttributes: attributes mirrored to signals and kept in sync with the DOM
 - properties: JS properties mirrored to signals (no attributes involved)
 - cssStylesheets: constructable stylesheets adopted into the shadow root
+- internals: optional factory or partial internals to patch onto `attachInternals()` result
+- formAssociated: set to true to opt into form-associated custom elements (exposes ElementInternals via attachInternals)
 - onConnected: optional callback invoked after the element connects
+
+TypeScript tip:
+```ts
+import type { ElementoOptions } from '@solidx/elemento';
+
+const opts: ElementoOptions<'name', never> = {
+  observedAttributes: ['name'],
+};
+customElements.define('hello-name', Elemento(Hello, opts));
+```
+
+Common option combinations:
+- Attributes only: `Elemento(Component, { observedAttributes: ['foo', 'bar'] })`
+- Properties only: `Elemento(Component, { properties: ['value', 'data'] })`
+- Styles + attributes: `Elemento(Component, { observedAttributes: ['variant'], cssStylesheets: [sheet] })`
+- Internals patching: `Elemento(Component, { internals: el => ({ role: 'button' }) })`
+- Form-associated: `Elemento(Component, { formAssociated: true, internals: el => ({ role: 'button' }) })`
 
 ### Component function
 

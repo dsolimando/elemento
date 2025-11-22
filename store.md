@@ -87,6 +87,7 @@ function TodoList() {
         ${todos.value?.map(t => html`<p>${t.title}</p>`)}
       </section>`;
 }
+// Elemento accepts an options object; none are needed here.
 customElements.define('todo-list', Elemento(TodoList));
 ```
 
@@ -137,6 +138,14 @@ npm install @solidx/elemento
 Then import from the package name in your app code:
 ```js
 import { signal, computed, Elemento, html } from '@solidx/elemento';
+```
+
+TypeScript tip: you can type the options object if you pass one:
+```ts
+import type { ElementoOptions } from '@solidx/elemento';
+
+const opts: ElementoOptions<never, never> = {};
+customElements.define('todo-list', Elemento(TodoList, opts));
 ```
 
 ---

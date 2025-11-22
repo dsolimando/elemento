@@ -54,8 +54,9 @@
         `;
     }
 
-    customElements.define('my-country-list', Elemento(CountryList, [], ['filter']));
-    customElements.define('my-autocomplete', Elemento(AutoComplete, [], [], [styleSheet]));
+    customElements.define('my-country-list', Elemento(CountryList, { properties: ['filter'] }));
+    customElements.define('my-autocomplete', Elemento(AutoComplete, { cssStylesheets: [styleSheet] }));
+    // TS tip: import type { ElementoOptions } and type these option objects for stronger checks.
 </script>
 <my-autocomplete></my-autocomplete>
 </body>

@@ -65,26 +65,34 @@ interface IElemento {
   computedIndex: number;
   mount?: Function;
   unmount?: Function;
+  internals?: ElementInternals;
+}
+
+export interface ElementoOptions<K extends string, P extends string> {
+  observedAttributes?: readonly K[];
+  properties?: readonly P[];
+  cssStylesheets?: CSSStyleSheet[];
+  internals?: Partial<ElementInternals> | ((el: HTMLElement) => Partial<ElementInternals> | void);
+  formAssociated?: boolean;
+  onConnected?: (el: HTMLElement) => void;
 }
 
 /**
  * Web Component factory using lit-html + Preact Signals Core (@preact/signals-core) reactivity.
  *
  * @param elementoHTMLFn
- * @param {string[]} observedAttributes - List of attribute names to observe/react to.
- * @param {properties: Record<} [properties] - Optional properties to expose.
- * @param {(ctx: { signals: Record<string, any>, el: HTMLElement }) => void} [onConnected] - Optional hook for connectedCallback.
- * @param {CSSStyleSheet[]} [cssStylesheets] - Optional CSS stylesheets to adopt.
+ * @param options - Configuration options for the web component
  * @returns {CustomElementConstructor}
  */
 export function Elemento<K extends string, P extends string>(
   elementoHTMLFn: ElementoHTMLFn<K, P>,
-  observedAttributes?: readonly K[],
-  properties?: readonly P[],
-  cssStylesheets?: CSSStyleSheet[],
-  onConnected?: (el: HTMLElement) => void
+  options?: ElementoOptions<K, P>
 ): CustomElementConstructor {
+  const { observedAttributes, properties, cssStylesheets, internals, formAssociated, onConnected } = options || {};
+
   return class extends HTMLElement implements IElemento {
+    static formAssociated = !!formAssociated;
+
     static get observedAttributes() {
       return observedAttributes;
     }
@@ -102,6 +110,8 @@ export function Elemento<K extends string, P extends string>(
 
     unmount?: Function;
 
+    internals?: ElementInternals;
+
     propSignals?: Record<P, Signal<any>>;
 
     signalsIndex = 0;
@@ -117,6 +127,20 @@ export function Elemento<K extends string, P extends string>(
       super();
       this.attachShadow({ mode: 'open' });
       this.shadowRoot!.adoptedStyleSheets = cssStylesheets || [];
+      if (formAssociated || internals) {
+        this.internals = this.attachInternals();
+        const providedInternals = typeof internals === 'function' ? internals(this) : internals;
+        if (providedInternals) {
+          for (const [key, value] of Object.entries(providedInternals)) {
+            try {
+              // Best-effort property patching; some ElementInternals properties are readonly.
+              (this.internals as any)[key] = value;
+            } catch {
+              /* noop */
+            }
+          }
+        }
+      }
     }
 
     connectedCallback() {

@@ -76,8 +76,11 @@
     // Register the custom element with Elemento
     customElements.define(
         'my-button',
-        Elemento(Button, attributes, properties)
+        Elemento(Button, { observedAttributes: attributes, properties })
     );
+    // For TypeScript, you can type the options:
+    // import type { ElementoOptions } from '@solidx/elemento';
+    // const opts: ElementoOptions<typeof attributes[number], typeof properties[number]> = { observedAttributes: attributes, properties };
 
     customElements.define(
         'my-data-button',
