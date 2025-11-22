@@ -1,3 +1,8 @@
+---
+title: Store Guide
+nav_order: 2
+---
+
 # Central Store with Elemento
 
 This guide shows how to create a tiny, framework-free “central store” using Elemento’s signals. It’s based on the live example in `src/__tests__/store.html` and `src/__tests__/store.js`.

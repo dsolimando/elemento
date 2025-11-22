@@ -1,18 +1,31 @@
 # Elemento
 
-Lightweight, build-free utilities for composing modern Web Components with lit-html templating and Preact Signals reactivity. Ships as ESM; use directly in browsers or bundle if your app requires it.
+**Build modern, reactive Web Components effortlessly** — with functional composition, lit-html templating, and Preact Signals reactivity. Zero build step required.
 
-- [Full guide](doc/README.md) — install, API, examples
-- [Store walkthrough](doc/store.md) — central store patterns
+✨ **Modern & Lightweight** — Ships as ESM modules, use directly in browsers or bundle as needed  
+🚀 **React-inspired API** — Familiar functional component patterns  
+⚡  **Reactive by default** — Powered by Preact Signals for automatic updates  
+🎯 **Standards-based** — Built on native Web Components and Custom Elements
+
+- [Documentation & Examples](https://dsolimando.github.io/elemento/) — complete guide and live demos
 
 Quick start:
+
 ```sh
 npm install @solidx/elemento
 ```
+
 ```ts
 import { Elemento, html } from '@solidx/elemento';
-customElements.define('hello-name', Elemento(({ name }) => html`<p>Hello ${name.value || 'World'}</p>`, {
-  observedAttributes: ['name'],
-}));
+
+function Hello({ name }) {
+  return html`<p>Hello ${name.value || 'World'}</p>`;
+}
+
+customElements.define(
+  'hello-name',
+  Elemento(Hello, {
+    observedAttributes: ['name'],
+  })
+);
 ```
-    

@@ -1,3 +1,8 @@
+---
+title: Overview
+nav_order: 1
+---
+
 # Elemento
 
 A lightweight, opinionated library for building web components with a functional, React-inspired approach, powered by the excellent [lit-html](https://github.com/lit/lit/tree/main/packages/lit-html) templating library and the tiny, fast [Preact Signals Core](https://github.com/preactjs/signals) reactivity system.
