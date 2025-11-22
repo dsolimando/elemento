@@ -1,6 +1,7 @@
 # Elemento
 
-**Build modern, reactive Web Components effortlessly** — with functional composition, lit-html templating, and Preact Signals reactivity. Zero build step required.
+A lightweight, opinionated library for building web components with a functional, React-inspired approach, powered by the excellent [lit-html](https://github.com/lit/lit/tree/main/packages/lit-html) templating library and the tiny, fast [Preact Signals Core](https://github.com/preactjs/signals) reactivity system.
+
 
 ✨ **Modern & Lightweight** — Ships as ESM modules, use directly in browsers or bundle as needed  
 🚀 **React-inspired API** — Familiar functional component patterns  
