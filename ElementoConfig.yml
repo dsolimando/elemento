@@ -1,0 +1,20 @@
+# doc/_config.yml
+title: Elemento
+description: A lightweight library for building web components
+baseurl: "/elemento"  # Replace with your actual repo name
+url: "https://dsolimando.github.io"  # Replace with your GitHub username
+
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Make sure README.md becomes index.html
+defaults:
+  - scope:
+      path: "README.md"
+    values:
+      permalink: "/"
